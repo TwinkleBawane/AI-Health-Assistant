@@ -1,34 +1,35 @@
 import streamlit as st
-import nltk
 from transformers import pipeline
-from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize
 
+# Load a medical Q&A model
+@st.cache_resource
+def load_model():
+    return pipeline("question-answering", model="deepset/roberta-base-squad2")
 
-chatbot = pipeline("text-generation", model="distilgpt2")
+chatbot = load_model()
 
-def healthcare_chatbot(user_input):
-    if "symptom" in user_input:
-        return "Please consult Doctor for accurate advice."
-    elif "appointment" in user_input:
-        return "Would you like to schedule aapointment with the Doctor?"
-    elif "medication" in user_input:
-        return "It's important to take prescribed medicines regularly. If you have concern, consult your doctor."
-    else:
-        response = chatbot(user_input,max_length = 500,num_return_sequences=1)
-        return response[0]['generated_text']
+def healthcare_chatbot(question):
+    context = (
+        "Ibuprofen is a medicine used to reduce fever, pain, and inflammation. "
+        "For nausea and vomiting, you can try drinking ginger tea, staying hydrated, and avoiding spicy food. "
+        "Paracetamol is often recommended for fever."
+    )
+    
+    response = chatbot(question=question, context=context)
+    return response['answer']
 
 def main():
     st.title("Healthcare Assistant Chatbot")
-    user_input = st.text_input("How can i aasist you today?")
+    user_input = st.text_input("How can I assist you today?")
+
     if st.button("Submit"):
         if user_input:
-            st.write("User : ",user_input)
-            with st.spinner("Processing your query, PLease wait....."):
-                response=healthcare_chatbot(user_input)
-            st.write("Healthcare Assistant : ",response)
-            print(response)
+            st.write("User:", user_input)
+            with st.spinner("Processing your query, please wait..."):
+                response = healthcare_chatbot(user_input)
+            st.write("Healthcare Assistant:", response)
         else:
-            st.write("Please enter a message to get response.")
+            st.write("Please enter a message to get a response.")
 
-main()
+if __name__ == "__main__":
+    main()
